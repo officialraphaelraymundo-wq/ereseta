@@ -1,5 +1,5 @@
 // Keeps a copy of the app on the phone so it opens without internet.
-var CACHE = "ereseta-v1";
+var CACHE = "docmike-v2";
 var FILES = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }));
