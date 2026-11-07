@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E-reseta</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style id="page-size">@page { size: A4 portrait; margin: 10mm; }</style>
+<style>
+:root {
+  --green-deep: #000000; --green: #111111; --gold: #111111; --gold-soft: #444444;
+  --page: #f4f4f4; --white: #ffffff; --ink: #111111; --ink-soft: #555555;
+  --line: #bdbdbd; --red: #b3261e;
+  --serif: Georgia, "Times New Roman", serif;
+  --cond: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+  --sans: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 18px; line-height: 1.45; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.app { max-width: 540px; margin: 0 auto; padding: 0 0 130px; }
+
+.top { background: #ffffff; color: #111;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px; border-bottom: 3px solid #111;
+  display: flex; align-items: center; gap: 12px; }
+.top .titles { flex: 1; min-width: 0; }
+.top h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
+.top .doc { font-size: .9rem; color: var(--gold-soft); }
+.gear { min-width: 52px; min-height: 52px; border-radius: 12px; border: 2px solid #111;
+  background: #fff; color: #111; font-size: .9rem; font-weight: 600; padding: 0 12px; cursor: pointer; }
+
+.card { background: var(--white); margin: 16px 14px 0; border-radius: 14px; border: 1.5px solid var(--line); padding: 16px; }
+.card h2 { margin: 0 0 12px; font-size: 1.25rem; color: #111; }
+.lbl { display: block; font-weight: 600; margin: 12px 0 6px; }
+.opt { font-weight: 400; color: var(--ink-soft); font-size: .9rem; }
+.field { width: 100%; min-height: 54px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--white); }
+.field:focus { border-color: var(--green); outline: none; }
+select.field { appearance: auto; }
+textarea.field { min-height: 80px; resize: vertical; }
+.row { display: flex; gap: 10px; }
+.row > div { flex: 1; min-width: 0; }
+.pick { display: flex; gap: 8px; }
+.pick button { flex: 1; min-height: 54px; border-radius: 12px; border: 2px solid var(--line); background: var(--white); font-weight: 600; cursor: pointer; }
+.pick button[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+.err { color: var(--red); font-weight: 600; font-size: .95rem; margin-top: 6px; }
+
+.add-custom { width: 100%; margin-top: 10px; min-height: 54px; border-radius: 12px; border: 2px dashed var(--green); background: var(--white); color: var(--green); font-weight: 700; cursor: pointer; }
+.typein { margin-top: 12px; padding: 14px; border: 2px solid var(--green); border-radius: 12px; background: var(--page); }
+.typein .lbl:first-child { margin-top: 0; }
+.check { display: flex; align-items: center; gap: 10px; margin-top: 12px; min-height: 48px; }
+.check input { width: 26px; height: 26px; accent-color: var(--green); }
+.btns { display: flex; gap: 10px; margin-top: 12px; }
+.btn { flex: 1; min-height: 54px; border-radius: 12px; border: 2px solid var(--green); background: var(--green); color: #fff; font-family: var(--cond); font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+.btn.plain { background: var(--white); color: var(--green); }
+.med { margin-top: 14px; padding: 14px; border: 2px solid #111; border-radius: 12px; }
+.med .name { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.med .name b { font-size: 1.1rem; }
+.remove { min-height: 48px; padding: 0 12px; border: 2px solid #e2c7c0; border-radius: 10px; background: var(--white); color: var(--red); font-weight: 600; cursor: pointer; }
+.empty { color: var(--ink-soft); margin: 12px 0 0; }
+
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: var(--white); border-top: 1.5px solid var(--line);
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.bar .inner { max-width: 540px; margin: 0 auto; display: flex; gap: 10px; }
+.big { flex: 1; min-height: 60px; border: 0; border-radius: 14px; background: var(--green); color: #fff; font-family: var(--cond); font-size: 1.3rem; font-weight: 700; cursor: pointer; }
+.big:disabled { background: #d9d3c4; color: #6b6a62; cursor: not-allowed; }
+.big.plain { background: var(--white); color: var(--green); border: 2px solid var(--green); flex: 0 0 28%; }
+
+.sig-box { margin-top: 10px; min-height: 90px; display: grid; place-items: center; border: 2px solid var(--line); border-radius: 12px; background: #fff; padding: 8px; }
+.sig-box img { max-height: 80px; max-width: 100%; }
+.upload { display: flex; align-items: center; justify-content: center; text-align: center; position: relative; min-height: 54px; padding: 8px; border: 2px dashed var(--green); border-radius: 12px; color: var(--green); font-weight: 600; cursor: pointer; }
+.upload input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.upload:has(input:focus-visible) { outline: 3px solid var(--gold); outline-offset: 2px; }
+.medlist { list-style: none; margin: 0; padding: 0; }
+.pad-wrap { margin-top: 10px; border: 2px solid #111; border-radius: 12px; background: #fff; position: relative; touch-action: none; }
+.pad-wrap canvas { display: block; width: 100%; height: 180px; border-radius: 12px; touch-action: none; cursor: crosshair; }
+.pad-wrap .hint { position: absolute; left: 16px; right: 16px; bottom: 34px; border-top: 1.5px dashed #999; pointer-events: none; }
+.pad-wrap .hint span { position: absolute; left: 0; top: 4px; font-size: .85rem; color: #777; }
+.or { text-align: center; color: var(--ink-soft); margin: 14px 0 10px; }
+.medlist li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+
+/* Preview */
+.preview { position: fixed; inset: 0; z-index: 10; background: #444; overflow-y: auto;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 10px calc(110px + env(safe-area-inset-bottom, 0px)); }
+.sizes { max-width: 500px; margin: 0 auto 12px; background: var(--white); border-radius: 12px; padding: 10px 12px; }
+.sizes .t { font-weight: 600; margin-bottom: 8px; }
+.paper-img { display: block; width: 100%; max-width: 500px; margin: 0 auto; background: #fff; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  background: #111; color: #fff; border: 1px solid #fff; border-radius: 12px; padding: 12px 16px; max-width: 92%; display: none; }
+.toast.show { display: block; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media print {
+  body { background: #fff; }
+  .app, .bar, .sizes, .toast { display: none !important; }
+  .preview { position: static; display: block !important; background: none; padding: 0; overflow: visible; }
+  .paper-img { max-width: none; width: 100%; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Main screen ===== -->
+<div class="app" id="main">
+  <header class="top">
+    <div class="titles">
+      <h1>E-reseta</h1>
+      <div class="doc" id="doc-line"></div>
+    </div>
+    <button class="gear" id="open-settings" type="button">Settings</button>
+  </header>
+
+  <section class="card" aria-labelledby="h-patient">
+    <h2 id="h-patient">Patient</h2>
+    <label class="lbl" for="p-name" style="margin-top:0">Name</label>
+    <input class="field" id="p-name" autocomplete="off" autocapitalize="words">
+    <div class="row">
+      <div>
+        <label class="lbl" for="p-age">Age</label>
+        <input class="field" id="p-age" inputmode="numeric" autocomplete="off">
+      </div>
+      <div>
+        <div class="lbl" id="p-sex-label">Sex</div>
+        <div class="pick" role="group" aria-labelledby="p-sex-label">
+          <button type="button" data-sex="F" aria-pressed="false">F</button>
+          <button type="button" data-sex="M" aria-pressed="false">M</button>
+        </div>
+      </div>
+    </div>
+    <label class="lbl" for="p-address">Address <span class="opt">(optional)</span></label>
+    <input class="field" id="p-address" autocomplete="off">
+  </section>
+
+  <section class="card" aria-labelledby="h-meds">
+    <h2 id="h-meds">Medicines</h2>
+    <label class="vh" for="med-pick">Choose a medicine</label>
+    <select class="field" id="med-pick"></select>
+    <button type="button" class="add-custom" id="open-custom">+ Add a medicine not on the list</button>
+
+    <div class="typein" id="typein" hidden>
+      <label class="lbl" for="t-name">Generic name</label>
+      <input class="field" id="t-name" autocomplete="off" autocapitalize="words">
+      <div class="err" id="t-err" hidden>Type the generic name.</div>
+      <div class="row">
+        <div>
+          <label class="lbl" for="t-strength">Strength</label>
+          <input class="field" id="t-strength" autocomplete="off" placeholder="500 mg">
+        </div>
+        <div>
+          <label class="lbl" for="t-form">Form</label>
+          <select class="field" id="t-form"></select>
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="t-save" checked> Add to my list for next time</label>
+      <div class="btns">
+        <button type="button" class="btn plain" id="t-cancel">Cancel</button>
+        <button type="button" class="btn" id="t-add">Add</button>
+      </div>
+    </div>
+
+    <div id="meds"></div>
+    <p class="empty" id="empty">No medicines yet.</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-notes">
+    <h2 id="h-notes">Other instructions <span class="opt">(optional)</span></h2>
+    <label class="vh" for="p-notes">Other instructions</label>
+    <textarea class="field" id="p-notes" placeholder="Example: no warm bath, no prolonged bath, no scrubbing"></textarea>
+  </section>
+</div>
+
+<!-- ===== Settings screen ===== -->
+<div class="app" id="settings" hidden>
+  <header class="top">
+    <div class="titles"><h1>Settings</h1><div class="doc">Set these once. They stay on this phone.</div></div>
+  </header>
+
+  <section class="card" aria-labelledby="h-doc">
+    <h2 id="h-doc">Doctor</h2>
+    <label class="lbl" for="s-docname" style="margin-top:0">Doctor's name</label>
+    <input class="field" id="s-docname" autocomplete="off" placeholder="Example: Juan Dela Cruz, MD">
+    <label class="lbl" for="s-spec">Specialization <span class="opt">(optional)</span></label>
+    <input class="field" id="s-spec" autocomplete="off">
+    <label class="lbl" for="s-subspec">Sub-specialization <span class="opt">(optional)</span></label>
+    <input class="field" id="s-subspec" autocomplete="off">
+    <label class="lbl" for="s-signname">Name under the signature</label>
+    <input class="field" id="s-signname" autocomplete="off">
+    <label class="lbl" for="s-prc">License no.</label>
+    <input class="field" id="s-prc" inputmode="numeric" autocomplete="off">
+    <label class="lbl" for="s-ptr">PTR no.</label>
+    <input class="field" id="s-ptr" inputmode="numeric" autocomplete="off">
+    <div class="opt" style="margin-top:6px">Change this when you renew your PTR.</div>
+  </section>
+
+  <section class="card" aria-labelledby="h-clinics">
+    <h2 id="h-clinics">Clinics <span class="opt">(optional)</span></h2>
+    <label class="vh" for="s-clinics">Clinics</label>
+    <textarea class="field" id="s-clinics" style="min-height:220px" placeholder="Clinic name
+Address
+Days and hours
+Phone number
+
+Next clinic name
+..."></textarea>
+    <div class="opt" style="margin-top:6px">First line is the clinic name. Leave one empty line between clinics.</div>
+  </section>
+
+  <section class="card" aria-labelledby="h-sig">
+    <h2 id="h-sig">Signature</h2>
+    <div class="sig-box" id="sig-box">No signature yet</div>
+    <div class="lbl">Sign with your finger</div>
+    <div class="pad-wrap"><canvas id="sig-pad" aria-label="Signature pad"></canvas><div class="hint"><span>Sign above the line</span></div></div>
+    <div class="btns">
+      <button type="button" class="btn plain" id="pad-clear">Clear</button>
+      <button type="button" class="btn" id="pad-use">Use this signature</button>
+    </div>
+    <div class="or">or</div>
+    <label class="upload">Choose a photo of your signature
+      <input type="file" id="s-sig" accept="image/*">
+    </label>
+    <div class="btns" id="sig-remove-wrap" hidden><button type="button" class="btn plain" id="sig-remove">Remove signature</button></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-list">
+    <h2 id="h-list">My medicine list</h2>
+    <div class="typein" style="margin:0 0 12px">
+      <label class="lbl" for="m-name">Add a medicine: generic name</label>
+      <input class="field" id="m-name" autocomplete="off" autocapitalize="words">
+      <div class="err" id="m-err" hidden>Type the generic name.</div>
+      <div class="row">
+        <div>
+          <label class="lbl" for="m-strength">Strength</label>
+          <input class="field" id="m-strength" autocomplete="off" placeholder="500 mg">
+        </div>
+        <div>
+          <label class="lbl" for="m-form">Form</label>
+          <select class="field" id="m-form"></select>
+        </div>
+      </div>
+      <div class="btns"><button type="button" class="btn" id="m-add">Add to my list</button></div>
+    </div>
+    <ul class="medlist" id="medlist"></ul>
+  </section>
+</div>
+
+<!-- ===== Preview ===== -->
+<div class="preview" id="preview" hidden role="dialog" aria-modal="true" aria-label="Prescription preview">
+  <div class="sizes">
+    <div class="t" id="size-label">Paper size</div>
+    <div class="pick" role="group" aria-labelledby="size-label" id="sizes">
+      <button type="button" data-size="A4" aria-pressed="true">A4</button>
+      <button type="button" data-size="Letter" aria-pressed="false">Letter</button>
+      <button type="button" data-size="Legal" aria-pressed="false">Legal</button>
+    </div>
+  </div>
+  <img class="paper-img" id="paper" alt="Prescription preview">
+</div>
+
+<!-- ===== Bottom buttons ===== -->
+<div class="bar">
+  <div class="inner" id="bar-main">
+    <button class="big plain" id="clear-btn" type="button">Clear</button>
+    <button class="big" id="preview-btn" type="button" disabled>Preview</button>
+  </div>
+  <div class="inner" id="bar-settings" hidden>
+    <button class="big" id="settings-done" type="button">Save and go back</button>
+  </div>
+  <div class="inner" id="bar-preview" hidden>
+    <button class="big plain" id="back-btn" type="button">Back</button>
+    <button class="big plain" id="print-btn" type="button">Print</button>
+    <button class="big" id="send-btn" type="button">Save PDF</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function toast(msg, ms) {
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.timer); toast.timer = setTimeout(function () { t.classList.remove("show"); }, ms || 4000);
+  }
+
+  var FORMS = ["tablet", "capsule", "syrup", "drops", "cream", "ointment", "gel", "lotion", "solution", "shampoo"];
+  [$("t-form"), $("m-form")].forEach(function (s) {
+    var none = el("option", null, "(none)"); none.value = ""; s.appendChild(none);
+    FORMS.forEach(function (f) { s.appendChild(el("option", null, f)); });
+  });
+
+  // Only settings and the medicine list are kept on the phone. Patient details are never saved.
+  var STORE = "ereseta-doctor-v1";
+  var starterMeds = [
+    "Amoxicillin|500 mg|capsule", "Azithromycin|500 mg|tablet", "Cefuroxime|500 mg|tablet",
+    "Cetirizine|10 mg|tablet", "Clindamycin|1%|gel", "Clotrimazole|1%|cream",
+    "Diphenhydramine|50 mg|capsule", "Doxycycline|100 mg|capsule", "Hydrocortisone|1%|cream",
+    "Ibuprofen|400 mg|tablet", "Ketoconazole|2%|cream", "Loratadine|10 mg|tablet",
+    "Mefenamic acid|500 mg|capsule", "Mometasone furoate|0.1%|cream", "Mupirocin|2%|ointment",
+    "Paracetamol|500 mg|tablet", "Paracetamol|250 mg/5 mL|syrup", "Tretinoin|0.025%|cream"
+  ];
+  var saved = { docName: "Michael Angelo A. Raymundo MD", spec: "DOLE Accredited Occupational Safety and Health Practitioner", subspec: "", signName: "Michael Angelo A. Raymundo MD", prc: "0094455", ptr: "9527603", clinics: "Dr. Raymundo Medical Clinic\nAlsan Bldg Mc Arthur Highway Malanday Val. City\n09565124782", signature: null, meds: starterMeds.slice() };
+  try {
+    var raw = localStorage.getItem(STORE);
+    if (raw) { var parsed = JSON.parse(raw); for (var k in parsed) if (k in saved) saved[k] = parsed[k]; }
+  } catch (e) { /* storage unavailable: work without it */ }
+  function persist() { try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) {} }
+
+  function medLabel(code) { return code.split("|").filter(Boolean).join(" "); }
+  function sortMeds() { saved.meds.sort(function (a, b) { return medLabel(a).localeCompare(medLabel(b)); }); }
+  function makeCode(name, strength, form) { return [name.charAt(0).toUpperCase() + name.slice(1), strength, form].join("|"); }
+  function addToList(code) {
+    var exists = saved.meds.some(function (m) { return medLabel(m).toLowerCase() === medLabel(code).toLowerCase(); });
+    if (!exists) { saved.meds.push(code); persist(); }
+    return !exists;
+  }
+
+  var rx = { sex: "", items: [] };
+
+  // ---------- Patient ----------
+  document.querySelectorAll("[data-sex]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      rx.sex = rx.sex === b.dataset.sex ? "" : b.dataset.sex;
+      document.querySelectorAll("[data-sex]").forEach(function (x) { x.setAttribute("aria-pressed", x.dataset.sex === rx.sex ? "true" : "false"); });
+    });
+  });
+  $("p-age").addEventListener("input", function () { this.value = this.value.replace(/[^0-9]/g, "").slice(0, 3); });
+
+  // ---------- Medicines ----------
+  function fillPicker() {
+    sortMeds();
+    var s = $("med-pick"); s.innerHTML = "";
+    var first = el("option", null, rx.items.length ? "Add another medicine…" : "Choose a medicine…"); first.value = ""; s.appendChild(first);
+    saved.meds.forEach(function (code) { var o = el("option", null, medLabel(code)); o.value = code; s.appendChild(o); });
+    s.value = "";
+  }
+  $("med-pick").addEventListener("change", function () { if (this.value) addMed(this.value); });
+
+  $("open-custom").addEventListener("click", function () {
+    $("typein").hidden = false; $("open-custom").hidden = true; $("t-name").focus();
+  });
+  function closeTypeIn() {
+    $("typein").hidden = true; $("open-custom").hidden = false;
+    $("t-name").value = ""; $("t-strength").value = ""; $("t-form").selectedIndex = 0; $("t-save").checked = true; $("t-err").hidden = true;
+  }
+  $("t-cancel").addEventListener("click", closeTypeIn);
+  $("t-add").addEventListener("click", function () {
+    var name = $("t-name").value.trim();
+    if (!name) { $("t-err").hidden = false; $("t-name").focus(); return; }
+    var code = makeCode(name, $("t-strength").value.trim(), $("t-form").value);
+    if ($("t-save").checked) addToList(code);
+    closeTypeIn();
+    addMed(code);
+  });
+
+  function addMed(code) {
+    rx.items.push({ code: code, sig: "", qty: "" });
+    drawMeds();
+    var sigs = document.querySelectorAll(".med textarea");
+    sigs[sigs.length - 1].focus();
+  }
+  function drawMeds() {
+    var box = $("meds"); box.innerHTML = "";
+    rx.items.forEach(function (item, i) {
+      var card = el("div", "med"), top = el("div", "name");
+      top.appendChild(el("b", null, medLabel(item.code)));
+      var rm = el("button", "remove", "Remove"); rm.type = "button";
+      rm.setAttribute("aria-label", "Remove " + medLabel(item.code));
+      rm.addEventListener("click", function () { rx.items.splice(i, 1); drawMeds(); });
+      top.appendChild(rm); card.appendChild(top);
+      var sl = el("label", "lbl", "How to take it"); sl.htmlFor = "sig" + i;
+      var sig = el("textarea", "field"); sig.id = "sig" + i; sig.value = item.sig;
+      sig.addEventListener("input", function () { item.sig = sig.value; });
+      var ql = el("label", "lbl", "Quantity"); ql.htmlFor = "qty" + i;
+      var qty = el("input", "field"); qty.id = "qty" + i; qty.value = item.qty; qty.autocomplete = "off";
+      qty.addEventListener("input", function () { item.qty = qty.value; });
+      card.appendChild(sl); card.appendChild(sig); card.appendChild(ql); card.appendChild(qty);
+      box.appendChild(card);
+    });
+    $("empty").hidden = rx.items.length > 0;
+    $("preview-btn").disabled = rx.items.length === 0;
+    fillPicker();
+  }
+
+  $("clear-btn").addEventListener("click", function () {
+    if ((rx.items.length || $("p-name").value.trim() || $("p-notes").value.trim()) && !window.confirm("Clear this prescription and start a new one?")) return;
+    ["p-name", "p-age", "p-address", "p-notes"].forEach(function (id) { $(id).value = ""; });
+    rx.sex = ""; rx.items = [];
+    document.querySelectorAll("[data-sex]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+    closeTypeIn(); drawMeds(); window.scrollTo(0, 0); $("p-name").focus();
+  });
+
+  // ---------- Screens ----------
+  function show(screen) {
+    $("main").hidden = screen !== "main";
+    $("settings").hidden = screen !== "settings";
+    $("preview").hidden = screen !== "preview";
+    $("bar-main").hidden = screen !== "main";
+    $("bar-settings").hidden = screen !== "settings";
+    $("bar-preview").hidden = screen !== "preview";
+    if (screen !== "preview") window.scrollTo(0, 0);
+  }
+
+  // ---------- Current prescription as plain data ----------
+  function current() {
+    var age = $("p-age").value.trim();
+    return {
+      name: $("p-name").value.trim(),
+      age: age,
+      sex: rx.sex === "F" ? "Female" : rx.sex === "M" ? "Male" : "",
+      address: $("p-address").value.trim(),
+      notes: $("p-notes").value.trim(),
+      date: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+      items: rx.items.map(function (it) { return { label: medLabel(it.code), sig: it.sig.trim(), qty: it.qty.trim() }; })
+    };
+  }
+
+  // ---------- On-screen preview ----------
+  var paperSize = "A4";
+  function setSize(size) {
+    paperSize = size;
+    if (!$("preview").hidden) renderPreview();
+    $("page-size").textContent = "@page { size: " + { A4: "A4", Letter: "letter", Legal: "legal" }[size] + " portrait; margin: 10mm; }";
+    document.querySelectorAll("#sizes button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.size === size ? "true" : "false"); });
+  }
+  document.querySelectorAll("#sizes button").forEach(function (b) { b.addEventListener("click", function () { setSize(b.dataset.size); }); });
+
+  // ---------- PDF (built on the phone, no internet needed) ----------
+  // Page sizes in PDF points (1 pt = 1/72 inch).
+  var PAGES = { A4: [595, 842], Letter: [612, 792], Legal: [612, 1008] };
+  var sigImage = null;
+  function loadSigImage() {
+    sigImage = null;
+    if (!saved.signature) return;
+    var img = new Image(); img.onload = function () { sigImage = img; }; img.src = saved.signature;
+  }
+
+  // Letterhead comes from Settings, so any doctor can use the app.
+  function letterhead() {
+    var clinics = (saved.clinics || "").split(/\n\s*\n/).map(function (block) {
+      return block.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    }).filter(function (b) { return b.length; });
+    return {
+      name: saved.docName || "Doctor's name (set it in Settings)",
+      lines: [saved.spec, saved.subspec].filter(Boolean),
+      clinics: clinics,
+      signName: saved.signName || saved.docName || ""
+    };
+  }
+
+  // Draws the whole prescription page in black and white. Used for both the preview and the PDF.
+  function drawPage(d, size) {
+    var W = PAGES[size][0], H = PAGES[size][1], S = 200 / 72; // 200 dpi
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.round(W * S); canvas.height = Math.round(H * S);
+    var c = canvas.getContext("2d");
+    c.scale(S, S);
+    c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H);
+    var M = 30, INK = "#000000";
+    var sans = "Helvetica, Arial, 'Liberation Sans', Roboto, sans-serif";
+    var serif = "'Times New Roman', Times, 'Liberation Serif', 'Noto Serif', Georgia, serif";
+    var L = letterhead();
+
+    function text(str, x, y, font, align) {
+      c.font = font; c.fillStyle = INK; c.textAlign = align || "left"; c.textBaseline = "alphabetic";
+      c.fillText(str, x, y);
+      return c.measureText(str).width;
+    }
+    function wrap(str, maxWidth, font) {
+      c.font = font;
+      var words = str.split(/\s+/).filter(Boolean), lines = [], line = "";
+      words.forEach(function (w) {
+        var test = line ? line + " " + w : w;
+        if (c.measureText(test).width > maxWidth && line) { lines.push(line); line = w; } else line = test;
+      });
+      if (line) lines.push(line);
+      return lines;
+    }
+    function labelValue(label, value, x, y) {
+      var w = text(label + " ", x, y, "700 12.5px " + sans);
+      text(value, x + w, y, "400 12.5px " + sans);
+    }
+
+    // Letterhead
+    var y = 46;
+    text(L.name, W / 2, y, "700 18.5px " + sans, "center");
+    L.lines.forEach(function (line) {
+      wrap(line, W - 2 * M, "400 13px " + sans).forEach(function (ln) { y += 17; text(ln, W / 2, y, "400 13px " + sans, "center"); });
+    });
+
+    // Clinic schedules, two columns
+    var lh = 12.4, colX = [M + 10, W / 2 + 2], rowY = y + 24, ruleY = y + 18;
+    for (var r = 0; r * 2 < L.clinics.length; r++) {
+      var left = L.clinics[r * 2], right = L.clinics[r * 2 + 1];
+      var rows = Math.max(left.length, right ? right.length : 0);
+      var single = L.clinics.length === 1;
+      [left, right].forEach(function (clinic, col) {
+        if (!clinic) return;
+        clinic.forEach(function (line, j) {
+          var font = (j === 0 ? "700 " : "400 ") + (single ? "11px " : "9.6px ") + sans;
+          if (single) text(line, W / 2, rowY + j * (lh + 1.5), font, "center");
+          else text(line, colX[col], rowY + j * lh, font);
+        });
+      });
+      if (single) rows = rows + 0.4;
+      ruleY = rowY + (rows - 1) * lh + 12;
+      rowY += rows * lh + 9;
+    }
+    c.fillStyle = INK; c.fillRect(M - 6, ruleY, W - 2 * M + 12, 1.6);
+
+    // Patient
+    var py = ruleY + 24, rightX = W - M - 90;
+    labelValue("Name:", d.name, M - 6, py);
+    labelValue("Age:", d.age, rightX, py);
+    labelValue("Address:", d.address, M - 6, py + 18);
+    labelValue("Sex:", d.sex, rightX, py + 18);
+
+    // Rx and date
+    var rxY = py + 82;
+    text("R", M - 6, rxY, "400 56px " + serif);
+    c.font = "400 56px " + serif; var rW = c.measureText("R").width;
+    text("x", M - 6 + rW * 0.55, rxY + 14, "400 46px " + serif);
+    text(d.date, W - M - 14, rxY - 20, "400 12.5px " + sans, "right");
+
+    // Medicines
+    y = rxY + 42;
+    var x = M + 8, maxW = W - M - 14 - x;
+    d.items.forEach(function (it) {
+      if (it.qty) text(it.qty, W - M - 14, y, "700 12.5px " + sans, "right");
+      wrap(it.label, maxW - 60, "700 12.5px " + sans).forEach(function (ln) { text(ln, x, y, "700 12.5px " + sans); y += 16; });
+      wrap("Sig: " + it.sig, maxW, "400 12.5px " + sans).forEach(function (ln) { text(ln, x, y, "400 12.5px " + sans); y += 16; });
+      y += 18;
+    });
+    if (d.notes) {
+      d.notes.split(/\n/).forEach(function (para) {
+        wrap(para, maxW, "400 12.5px " + sans).forEach(function (ln) { text(ln, x, y, "400 12.5px " + sans); y += 16; });
+      });
+    }
+
+    // Signature block, bottom right
+    var cx = W * 0.70, sy = Math.max(y + 80, H - 70);
+    if (sigImage) {
+      var maxH = 58, ratio = sigImage.width / sigImage.height, h = maxH, w = h * ratio;
+      if (w > 200) { w = 200; h = w / ratio; }
+      c.drawImage(sigImage, cx - w / 2 + 10, sy - h + 8, w, h);
+    }
+    if (L.signName) text(L.signName, cx, sy, "700 12.5px " + sans, "center");
+    text("License # " + (saved.prc || "________"), cx, sy + 16, "400 12.5px " + sans, "center");
+    text("PTR # " + (saved.ptr || "________"), cx, sy + 32, "400 12.5px " + sans, "center");
+    return canvas;
+  }
+
+  function renderPreview() {
+    $("paper").src = drawPage(current(), paperSize).toDataURL("image/png");
+  }
+
+  // Wraps one JPEG page into a minimal PDF file.
+  function canvasToPdf(canvas, size) {
+    var W = PAGES[size][0], H = PAGES[size][1];
+    var b64 = canvas.toDataURL("image/jpeg", 0.92).split(",")[1];
+    var bin = atob(b64), jpeg = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) jpeg[i] = bin.charCodeAt(i);
+    var content = "q " + W + " 0 0 " + H + " 0 0 cm /Im0 Do Q";
+    var parts = [], offsets = [], length = 0;
+    function add(part) { parts.push(part); length += typeof part === "string" ? part.length : part.length; }
+    add("%PDF-1.4\n");
+    function obj(n, body) { offsets[n] = length; add(n + " 0 obj\n" + body + "\nendobj\n"); }
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+    obj(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + W + " " + H + "] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>");
+    obj(4, "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream");
+    offsets[5] = length;
+    add("5 0 obj\n<< /Type /XObject /Subtype /Image /Width " + canvas.width + " /Height " + canvas.height +
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jpeg.length + " >>\nstream\n");
+    add(jpeg);
+    add("\nendstream\nendobj\n");
+    var xref = length, table = "xref\n0 6\n0000000000 65535 f \n";
+    for (var n = 1; n <= 5; n++) table += String(offsets[n]).padStart(10, "0") + " 00000 n \n";
+    add(table + "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+    return new Blob(parts, { type: "application/pdf" });
+  }
+
+  function fileName(d) {
+    var who = (d.name || "patient").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    var t = new Date(), stamp = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+    return "Reseta_" + who + "_" + stamp + ".pdf";
+  }
+
+  $("send-btn").addEventListener("click", function () {
+    var d = current();
+    if (!d.name) { toast("Type the patient's name first. To write it by hand, use Print instead."); return; }
+    var blob = canvasToPdf(drawPage(d, paperSize), paperSize), name = fileName(d);
+
+    // 1) Download the file to the phone.
+    var url = URL.createObjectURL(blob), a = el("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+
+    // 2) Open the share menu so she can pick Messenger right away, where the phone supports it.
+    var file = null;
+    try { file = new File([blob], name, { type: "application/pdf" }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      toast("PDF saved. Pick Messenger to send it.");
+      navigator.share({ files: [file], title: "Prescription" }).catch(function () {
+        toast("PDF saved to Downloads. In Messenger, tap + and attach it.", 6000);
+      });
+    } else {
+      toast("PDF saved to Downloads. In Messenger, tap + and attach it.", 6000);
+    }
+  });
+
+  $("preview-btn").addEventListener("click", function () {
+    show("preview"); renderPreview(); $("preview").scrollTop = 0;
+  });
+  $("back-btn").addEventListener("click", function () { show("main"); });
+  $("print-btn").addEventListener("click", function () { window.print(); });
+
+  // ---------- Settings ----------
+  var pendingSig = null;
+  function drawSig() {
+    var box = $("sig-box"); box.innerHTML = "";
+    if (pendingSig) { var img = el("img"); img.src = pendingSig; img.alt = "Your signature"; box.appendChild(img); }
+    else box.textContent = "No signature yet";
+    $("sig-remove-wrap").hidden = !pendingSig;
+  }
+  function drawMedList() {
+    sortMeds();
+    var ul = $("medlist"); ul.innerHTML = "";
+    saved.meds.forEach(function (code) {
+      var li = el("li"); li.appendChild(el("span", null, medLabel(code)));
+      var rm = el("button", "remove", "Remove"); rm.type = "button";
+      rm.setAttribute("aria-label", "Remove " + medLabel(code) + " from my list");
+      rm.addEventListener("click", function () {
+        saved.meds.splice(saved.meds.indexOf(code), 1); persist(); drawMedList(); fillPicker();
+      });
+      li.appendChild(rm); ul.appendChild(li);
+    });
+  }
+  $("m-add").addEventListener("click", function () {
+    var name = $("m-name").value.trim();
+    if (!name) { $("m-err").hidden = false; $("m-name").focus(); return; }
+    $("m-err").hidden = true;
+    var code = makeCode(name, $("m-strength").value.trim(), $("m-form").value);
+    toast(addToList(code) ? medLabel(code) + " added to your list." : medLabel(code) + " is already on your list.");
+    $("m-name").value = ""; $("m-strength").value = ""; $("m-form").selectedIndex = 0;
+    drawMedList(); fillPicker();
+  });
+  $("open-settings").addEventListener("click", function () {
+    ["docName:s-docname", "spec:s-spec", "subspec:s-subspec", "signName:s-signname", "prc:s-prc", "ptr:s-ptr", "clinics:s-clinics"].forEach(function (pair) {
+      var parts = pair.split(":"); $(parts[1]).value = saved[parts[0]] || "";
+    });
+    pendingSig = saved.signature; drawSig(); drawMedList(); show("settings"); setupPad();
+  });
+  $("s-sig").addEventListener("change", function () {
+    var file = this.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { pendingSig = reader.result; drawSig(); };
+    reader.readAsDataURL(file); this.value = "";
+  });
+  $("sig-remove").addEventListener("click", function () { pendingSig = null; drawSig(); });
+  $("settings-done").addEventListener("click", function () {
+    ["docName:s-docname", "spec:s-spec", "subspec:s-subspec", "signName:s-signname", "prc:s-prc", "ptr:s-ptr"].forEach(function (pair) {
+      var parts = pair.split(":"); saved[parts[0]] = $(parts[1]).value.trim();
+    });
+    saved.clinics = $("s-clinics").value.replace(/\s+$/, "");
+    saved.signature = pendingSig; persist(); loadSigImage(); showDoctor(); show("main"); toast("Settings saved.");
+  });
+
+  // ---------- Finger signature pad ----------
+  var pad = $("sig-pad"), pctx = null, drawing = false, padHasInk = false, last = null;
+  function setupPad() {
+    var ratio = window.devicePixelRatio || 1, rect = pad.getBoundingClientRect();
+    pad.width = Math.round(rect.width * ratio); pad.height = Math.round(rect.height * ratio);
+    pctx = pad.getContext("2d");
+    pctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    pctx.lineWidth = 2.6; pctx.lineCap = "round"; pctx.lineJoin = "round"; pctx.strokeStyle = "#000";
+    padHasInk = false;
+  }
+  function point(e) { var r = pad.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  pad.addEventListener("pointerdown", function (e) {
+    if (!pctx) setupPad();
+    drawing = true; last = point(e); pad.setPointerCapture(e.pointerId);
+    pctx.beginPath(); pctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); pctx.fillStyle = "#000"; pctx.fill();
+    padHasInk = true; e.preventDefault();
+  });
+  pad.addEventListener("pointermove", function (e) {
+    if (!drawing) return;
+    var p = point(e);
+    pctx.beginPath(); pctx.moveTo(last.x, last.y); pctx.lineTo(p.x, p.y); pctx.stroke();
+    last = p; e.preventDefault();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { pad.addEventListener(ev, function () { drawing = false; }); });
+  $("pad-clear").addEventListener("click", function () { setupPad(); });
+  $("pad-use").addEventListener("click", function () {
+    if (!padHasInk) { toast("Sign in the box first."); return; }
+    pendingSig = trimmedSignature(); drawSig(); toast("Signature ready. Tap Save and go back to keep it.");
+  });
+  // Crops the empty space around the drawn signature.
+  function trimmedSignature() {
+    var w = pad.width, h = pad.height, data = pctx.getImageData(0, 0, w, h).data;
+    var minX = w, minY = h, maxX = 0, maxY = 0;
+    for (var yy = 0; yy < h; yy++) for (var xx = 0; xx < w; xx++) {
+      if (data[(yy * w + xx) * 4 + 3] > 0) {
+        if (xx < minX) minX = xx; if (xx > maxX) maxX = xx; if (yy < minY) minY = yy; if (yy > maxY) maxY = yy;
+      }
+    }
+    var padPx = 6; minX = Math.max(0, minX - padPx); minY = Math.max(0, minY - padPx);
+    maxX = Math.min(w - 1, maxX + padPx); maxY = Math.min(h - 1, maxY + padPx);
+    var out = document.createElement("canvas"); out.width = maxX - minX + 1; out.height = maxY - minY + 1;
+    out.getContext("2d").drawImage(pad, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+    return out.toDataURL("image/png");
+  }
+
+  function showDoctor() { $("doc-line").textContent = saved.docName || "Tap Settings to add your name"; }
+
+  // Lets the app open without internet after the first visit.
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+
+  showDoctor();
+  loadSigImage();
+  drawMeds();
+  show("main");
+})();
+</script>
+</body>
+</html>
