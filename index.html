@@ -34,8 +34,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .top .doc { font-size: .9rem; color: var(--gold-soft); }
 .gear { min-width: 52px; min-height: 52px; border-radius: 12px; border: 2px solid #111;
   background: #fff; color: #111; font-size: .9rem; font-weight: 600; padding: 0 12px; cursor: pointer; }
-.mode { min-height: 52px; border-radius: 12px; border: 2px solid #111; background: #111;
-  color: #fff; font-size: .9rem; font-weight: 700; padding: 0 12px; cursor: pointer; }
+
+/* Big tabs at the top: Reseta / Med Cert */
+.tabs { position: sticky; top: 0; z-index: 12; background: #fff; border-bottom: 3px solid #111;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; }
+.tabs .inner { max-width: 540px; margin: 0 auto; display: flex; gap: 10px; }
+.tab { flex: 1; min-height: 66px; border-radius: 14px; border: 3px solid #111; background: #fff; color: #111;
+  font-family: var(--cond); font-size: 1.45rem; font-weight: 800; letter-spacing: .02em; cursor: pointer; }
+.tab[aria-selected="true"] { background: #111; color: #fff; }
+.tabs:not([hidden]) ~ .app .top { padding-top: 14px; }
 
 .card { background: var(--white); margin: 16px 14px 0; border-radius: 14px; border: 1.5px solid var(--line); padding: 16px; }
 .card h2 { margin: 0 0 12px; font-size: 1.25rem; color: #111; }
@@ -100,7 +107,7 @@ textarea.field { min-height: 80px; resize: vertical; }
 
 @media print {
   body { background: #fff; }
-  .app, .bar, .sizes, .toast { display: none !important; }
+  .app, .bar, .sizes, .toast, .tabs { display: none !important; }
   #preview[hidden], #cert-preview[hidden] { display: none !important; }
   .preview { position: static; display: block !important; background: none; padding: 0; overflow: visible; }
   .paper-img { max-width: none; width: 100%; box-shadow: none; }
@@ -109,6 +116,14 @@ textarea.field { min-height: 80px; resize: vertical; }
 </head>
 <body>
 
+<!-- ===== Tabs (always at the top) ===== -->
+<nav class="tabs" id="tabs" role="tablist" aria-label="Choose form">
+  <div class="inner">
+    <button class="tab" id="tab-rx" type="button" role="tab" aria-selected="true" aria-controls="main">Reseta</button>
+    <button class="tab" id="tab-cert" type="button" role="tab" aria-selected="false" aria-controls="certificate">Med Cert</button>
+  </div>
+</nav>
+
 <!-- ===== Main screen ===== -->
 <div class="app" id="main">
   <header class="top">
@@ -116,7 +131,6 @@ textarea.field { min-height: 80px; resize: vertical; }
       <h1>Doc Mike Rx</h1>
       <div class="doc" id="doc-line"></div>
     </div>
-    <button class="mode" id="open-certificate" type="button">Med Cert</button>
     <button class="gear" id="open-settings" type="button">Settings</button>
   </header>
 
@@ -326,7 +340,6 @@ Next clinic name
     <button class="big" id="preview-btn" type="button" disabled>Preview</button>
   </div>
   <div class="inner" id="bar-certificate" hidden>
-    <button class="big plain" id="cert-back-btn" type="button">Back</button>
     <button class="big" id="cert-preview-btn" type="button">Preview</button>
   </div>
   <div class="inner" id="bar-settings" hidden>
@@ -509,6 +522,9 @@ Next clinic name
     $("bar-settings").hidden = screen !== "settings";
     $("bar-preview").hidden = screen !== "preview";
     $("bar-cert-preview").hidden = screen !== "cert-preview";
+    $("tabs").hidden = screen !== "main" && screen !== "certificate";
+    $("tab-rx").setAttribute("aria-selected", screen === "main" ? "true" : "false");
+    $("tab-cert").setAttribute("aria-selected", screen === "certificate" ? "true" : "false");
     if (screen !== "preview" && screen !== "cert-preview") window.scrollTo(0, 0);
   }
 
@@ -946,8 +962,8 @@ Next clinic name
   document.querySelectorAll("#cert-sizes button").forEach(function (b) {
     b.addEventListener("click", function () { setCertSize(b.dataset.size); });
   });
-  $("open-certificate").addEventListener("click", function () { show("certificate"); });
-  $("cert-back-btn").addEventListener("click", function () { show("main"); });
+  $("tab-rx").addEventListener("click", function () { show("main"); });
+  $("tab-cert").addEventListener("click", function () { show("certificate"); });
   $("cert-preview-btn").addEventListener("click", function () {
     if (!$("c-name").value.trim()) { toast("Type the patient's name first."); $("c-name").focus(); return; }
     show("cert-preview"); renderCertPreview(); $("cert-preview").scrollTop = 0;
